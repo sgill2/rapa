@@ -44,6 +44,67 @@ def get_unknown_list_for_pml(structure):
     return all_unknown_residues
 
 
+def is_hydrogen_atom_line(line):
+    """
+    Determine whether an ATOM/HETATM PDB line represents a hydrogen atom.
+
+    Primary check uses the element symbol column (columns 77-78, 0-indexed
+    76:78) per the PDB format spec. If that column is blank/absent (common in
+    older or loosely-formatted PDBs), falls back to a heuristic on the atom
+    name field (columns 13-16, 0-indexed 12:16).
+    """
+    element = line[76:78].strip() if len(line) >= 78 else ''
+    if element:
+        return element.upper() == 'H'
+
+    # Fallback: infer from atom name when element column is missing.
+    atom_name = line[12:16].strip() if len(line) >= 16 else ''
+    if not atom_name:
+        return False
+    # Standard PDB atom-name convention: hydrogens either start with 'H'
+    # (e.g. "H", "HA", "HB2") or, when the name is 4 characters and starts
+    # with a digit due to right-justification rules, have 'H' as the next
+    # character (e.g. "1HB2", "2HD1").
+    if atom_name[0] == 'H':
+        return True
+    if atom_name[0].isdigit() and len(atom_name) > 1 and atom_name[1] == 'H':
+        return True
+    return False
+
+
+def strip_hydrogens_from_pdb(protID, in_folder='.'):
+    """
+    Read {in_folder}/{protID}.pdb, remove all hydrogen ATOM/HETATM records,
+    and write the result to {in_folder}/{protID}_noH.pdb.
+
+    Returns the protID (file prefix, without extension) of the newly written
+    hydrogen-free PDB file, so callers can substitute it wherever the
+    original protID was used.
+    """
+    in_path = os.path.join(in_folder, f"{protID}.pdb")
+    if not os.path.exists(in_path):
+        raise FileNotFoundError(f"Input PDB file not found: {in_path}")
+
+    out_protID = f"{protID}_noH"
+    out_path = os.path.join(in_folder, f"{out_protID}.pdb")
+
+    num_removed = 0
+    num_kept = 0
+    with open(in_path, 'r') as fin, open(out_path, 'w') as fout:
+        for line in fin:
+            if line.startswith(('ATOM', 'HETATM')) and is_hydrogen_atom_line(line):
+                num_removed += 1
+                continue
+            if line.startswith(('ATOM', 'HETATM')):
+                num_kept += 1
+            fout.write(line)
+
+    print(f"Removed {num_removed} hydrogen atom record(s) from {in_path}; "
+          f"{num_kept} non-hydrogen atom record(s) written to {out_path}")
+
+    return out_protID
+
+
 def parse_arguments(argv):
     """
     process arguments and parse them to global when needed
@@ -131,12 +192,21 @@ def main(argv):
     starttime = timeit.default_timer()
     print('PROGRAM CALL:python {}'.format(' '.join(sys.argv)))
 
-    # first cleaned up the input pdb file atom ID
+    # first check that the input pdb file exists
     pdb_file = f'./{args.protID}.pdb'
     if not os.path.isfile(pdb_file):
         print(f"ERROR: the input pdb file {pdb_file} does not exist. Exiting...")
         sys.exit(1)
+
+    # Remove hydrogens from the input PDB before doing anything else.
+    # RAPA requires hydrogen-free input; this makes that requirement automatic
+    # instead of relying on the user to have pre-stripped hydrogens themselves.
+    args.protID = strip_hydrogens_from_pdb(args.protID, in_folder='.')
+
+    # then clean up the (hydrogen-free) input pdb file atom ID
+    pdb_file = f'./{args.protID}.pdb'
     cleaned_id_pdb_name, cleaned_id_pdb_full_path = clean_pdb_atom_id(pdb_file)
+
     # set up structure, know the number of model and chain in the pdb
     structure = stp.setup_structure(args.protID, outFolder='.', fName=cleaned_id_pdb_name)
     chains = [item for sublist in structure for item in sublist]
