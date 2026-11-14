@@ -1862,6 +1862,12 @@ def resolve_residue_ambiguities_in_one_structure(structure, set_original_centroi
             # save chain ID, res ID, resname
             branched_residues.append((res_to_be_branch.parent.id, res_to_be_branch.id[1], res_to_be_branch.resname))
             for count, struc_name in enumerate(all_degen_struc_names):
+                # degenerate states are explored lowest-energy first; stop once --max_outputs files are written
+                if gc.max_outputs and pdb_file_num[0] >= gc.max_outputs:
+                    gc.outputs_truncated = True
+                    if gc.log_file:
+                        print(f"Reached --max_outputs={gc.max_outputs}; not exploring the remaining degenerate states")
+                    return generated_files, 0, branched_residues
 
                 modelID = res_to_be_branch.parent.parent.id
                 chainID = res_to_be_branch.parent.id

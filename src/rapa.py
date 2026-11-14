@@ -33,6 +33,8 @@ import setup_protein as stp
 import hydrogen_placement_sp2 as hsp2
 import state_assignment as sa
 import global_constants as gc
+import ligand as lig
+import residue_selection as rsel
 from misc import prettify_time, Logger, generate_multi_pdb_pymol_script, clean_pdb_atom_id, put_pdb_record_back
 
 def get_unknown_list_for_pml(structure):
@@ -72,10 +74,11 @@ def is_hydrogen_atom_line(line):
     return False
 
 
-def strip_hydrogens_from_pdb(in_path, out_folder):
+def strip_hydrogens_from_pdb(in_path, out_folder, keep_resnames=()):
     """
     Read the PDB at in_path, remove all hydrogen ATOM/HETATM records, and
     write the result to {out_folder}/{basename}_stripH.pdb.
+    Hydrogens of residues named in keep_resnames (the --ligand residues) are kept.
 
     This is an intermediate file: the caller is responsible for deleting it.
     Returns the full path of the written file.
@@ -90,7 +93,8 @@ def strip_hydrogens_from_pdb(in_path, out_folder):
     num_kept = 0
     with open(in_path, 'r') as fin, open(out_path, 'w') as fout:
         for line in fin:
-            if line.startswith(('ATOM', 'HETATM')) and is_hydrogen_atom_line(line):
+            if (line.startswith(('ATOM', 'HETATM')) and is_hydrogen_atom_line(line)
+                    and line[17:20].strip() not in keep_resnames):
                 num_removed += 1
                 continue
             if line.startswith(('ATOM', 'HETATM')):
@@ -138,6 +142,25 @@ def parse_arguments(argv):
                         help='A flag to indicate if the additional PDB (having suffix "_HLPsp2.pdb"), with SP2 hydrogen and lone pair coordinates exist. This can occur if the user requested the program to generate this additional PDB by providing "-k_hlp" as a flag in the previous run for the same PDB. Note, it is assumed RAPA for the given PDB is needed to run twice. During the first run the user provided the "-k_hlp" flag and generated the additional PDB (with suffix "_HLPsp2.pdb"). This was then used in the second run by providing "-hlp" in the second run. This two step approach is recommended for debugging as it stores an intermediate calculation and saves computational time.',
                         action="store_true")
 
+    parser.add_argument('--ligand', dest='ligand', type=str, default='', metavar='',
+                        help='Comma-separated residue name(s) of ligands (HETATM) to include as hydrogen-bond '
+                             'partners, e.g. --ligand LIG or --ligand LIG,NAG. Ligand hydrogens in the input are '
+                             'kept and used to identify donors; without them only O atoms are used (as acceptors).')
+
+    parser.add_argument('--fix', dest='fix', action='append', default=[], metavar='',
+                        help='Pin residues to a state instead of letting RAPA assign them: CHAIN:RESNUM:STATE, '
+                             'comma-separated or repeated, e.g. --fix A:94:HIP,A:120:ASNR. States: HID, HIE, HIP, '
+                             'ASN, GLN, ASP, GLU, and HIDR/HIER/HIPR/ASNR/GLNR for a flipped side chain.')
+
+    parser.add_argument('--around', dest='around', type=float, default=None, metavar='',
+                        help='Only assign residues within this distance (Angstrom) of the --ligand residues. '
+                             'All other residues keep their input state (an unspecified HIS becomes HIE). '
+                             'Requires --ligand.')
+
+    parser.add_argument('--max_outputs', dest='max_outputs', type=int, default=0, metavar='',
+                        help='Write at most this many output PDBs. Degenerate states are explored lowest-energy '
+                             'first, so the first N combinations are kept. Default: 0 (no limit)')
+
     parser.add_argument('--pymol',
                         help='If on, will generates a PyMOL script(.pml) that will load all the generated pdb files '
                              'and make each unknown residues a scene',
@@ -146,6 +169,16 @@ def parse_arguments(argv):
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.1.1 ')
 
     args = parser.parse_args(argv)
+
+    args.ligand_names = {name.strip() for name in args.ligand.split(',') if name.strip()}
+    if args.around is not None:
+        if not args.ligand_names:
+            parser.error('--around requires --ligand')
+        if args.around <= 0:
+            parser.error('--around must be a positive distance')
+    if args.max_outputs < 0:
+        parser.error('--max_outputs must be 0 (no limit) or a positive number')
+    args.fixes = rsel.parse_fix_args(args.fix)
 
     # Protein id
     # the input can either be 1bcd or 1bcd.pdb
@@ -170,6 +203,8 @@ def parse_arguments(argv):
     gc.log_file = args.log_file
     gc.out_folder = args.output_folder
     gc.out_info_file = f"{args.output_folder}/{args.out_prefix}.info"
+
+    gc.max_outputs = args.max_outputs
 
     if args.single_pdb_out:
         gc.ECutOff = 0
@@ -201,7 +236,7 @@ def main(argv):
     # instead of relying on the user to have pre-stripped hydrogens themselves.
     # The stripped copy is an intermediate file written to the output folder
     # (the user's input folder is left untouched) and deleted at the end.
-    stripped_pdb_path = strip_hydrogens_from_pdb(pdb_file, args.output_folder)
+    stripped_pdb_path = strip_hydrogens_from_pdb(pdb_file, args.output_folder, keep_resnames=args.ligand_names)
 
     # then clean up the (hydrogen-free) input pdb file atom ID
     cleaned_id_pdb_name, cleaned_id_pdb_full_path = clean_pdb_atom_id(stripped_pdb_path)
@@ -232,8 +267,21 @@ def main(argv):
         print(f"Chains: {num_chains}: {chains}\n")
 
 
+    # check the user's residue selections against the input structure
+    try:
+        if args.ligand_names:
+            lig.setup_ligands(structure, args.ligand_names)  # exits if a ligand name is not found
+        rsel.validate_fixes(structure, args.fixes)
+    except SystemExit:
+        os.remove(cleaned_id_pdb_full_path)
+        raise
+    out_of_region_keys = set()
+    if args.around is not None:
+        out_of_region_keys = rsel.get_out_of_region_keys(structure, args.ligand_names, args.around)
+
     # rename HID/HIE/HIP/ASH/GLH->HIS/HIS/HIS/ASP/GLU
-    stp.change_HIDEP_ASH_GLH(structure)
+    # residues outside the --around region (and not --fix'ed) keep their input names
+    stp.change_HIDEP_ASH_GLH(structure, keep_keys=out_of_region_keys - set(args.fixes))
 
     # initialize the known/unknown residues(ASN/GLN/HIS, and mark if 2 ASPs/GLUs are in h-bonding distance to each other)
     stp.set_initial_known_residues_and_rotamers(structure)
@@ -282,6 +330,23 @@ def main(argv):
         if (unknownGLU):
             structure, uniqueIDsGLU, over2GLUs = stp.accomodate_for_ASPs_GLUs(structure, unknownGLU, unknownGLU_atomInfo)
 
+    # ligands take part in the energy evaluation as known hydrogen-bond partners
+    selection_lines = []
+    if args.ligand_names:
+        selection_lines.append("Ligands used as hydrogen-bond partners:\n")
+        selection_lines += lig.setup_ligands(structure, args.ligand_names)
+
+    # pin --fix residues and residues outside the --around region
+    if args.fixes or out_of_region_keys:
+        selection_lines.append("Residues not assigned by RAPA:\n")
+        selection_lines += rsel.apply_pins(structure, args.fixes, out_of_region_keys)
+
+    if selection_lines:
+        msg = '\n' + ''.join(selection_lines)
+        with open(gc.out_info_file, "a") as fInfo:
+            fInfo.write(msg)
+        print(msg)
+
     # Flag the side chain residue hydrogen position for SER, THR, LYS, TYR is unknown.
     stp.set_initial_residue_side_chain_hydrogen_unknown(structure)
 
@@ -314,6 +379,13 @@ def main(argv):
         with open(gc.out_info_file, "a") as fInfo:
             fInfo.write(msg)
             fInfo.flush()
+        print(msg)
+
+    if gc.outputs_truncated:
+        msg = (f"WARNING: output capped at {gc.max_outputs} PDB file(s) by --max_outputs; "
+               f"further degenerate combinations were not written.\n")
+        with open(gc.out_info_file, "a") as fInfo:
+            fInfo.write(msg)
         print(msg)
 
     if args.pymol:

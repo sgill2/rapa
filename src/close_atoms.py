@@ -34,6 +34,7 @@ import copy
 import setup_protein as stp
 import rapa_residue_atom as rra
 import global_constants as gc
+import ligand as lig
 
 def hbond_energy(r, theta, gamma, attractive=True,
                  D1=5.3690476811615016,D2=27.58319209788471,D3=39.701896317848934,D4=4.854675162065331e-10,D5=0.09999999999999998,
@@ -578,6 +579,8 @@ def get_hydrogen_connected_to_donor(atomDonor, log_file=0):
     Input:-atomDonor: The donor atom
     Output: -atom3:the connected hydrogen
     """
+    if lig.is_ligand_atom(atomDonor):
+        return lig.get_ligand_hydrogens_bonded_to(atomDonor)
     ##check for the backbone nitrogen as a donor-else look into side chain atoms
     if(atomDonor.name == 'N'):
        atom3 = get_hydrogen_connected_to_donor_backbone(atomDonor)
@@ -669,7 +672,7 @@ def compute_energy_as_acceptor(acceptorAt, lp_vec, donorAt, attractive = 1, atyp
     if(attractive==1):
         hPresent =0
         ##check if the backbone nitrogen has hydrogen present-as often it doesn't (due to being the first atom of the chain, etc)
-        if(atom2.id == 'N'):
+        if(atom2.id == 'N' and not lig.is_ligand_atom(atom2)):
            hPresent =-1
            for at in atom2.parent.child_list:
                 if(at.id == 'H'):
@@ -697,6 +700,14 @@ def compute_energy_as_acceptor(acceptorAt, lp_vec, donorAt, attractive = 1, atyp
 
                 enValAcc.append([energy])
                 enSumAcc = enSumAcc+energy                    
+    elif lig.is_ligand_atom(donorAt):
+        # ligand acceptors have no lone-pair atoms: assume one points straight at this acceptor
+        atom3Coord = lig.pseudo_lonepair_toward(donorAt, acceptorAt)
+        r, theta = get_r_theta(atom1, atom2, atom3Coord, hydNotAtom = 1)
+        energy = hbond_energy(r, theta, gamma, attractive)
+        check_energy_range(energy)
+        enValAcc.append([energy])
+        enSumAcc = enSumAcc+energy
     else:
         
         myPsAcceptor = rra.rapa_atom(donorAt)
@@ -774,7 +785,13 @@ def compute_energy_as_donor(acceptorAt, hh_coord, donorAt, attractive = 1, atype
     enSumDon = 0
 
     ## Compute Gamma and then energy###
-    if(attractive ==1):
+    if(attractive ==1 and lig.is_ligand_atom(acceptorAt)):
+        # ligand acceptors have no lone-pair atoms: assume one points straight at the donor
+        energy = hbond_energy(r, theta, 0.0, attractive=True)
+        check_energy_range(energy)
+        enValDon.append([energy])
+        enSumDon = enSumDon + energy
+    elif(attractive ==1):
         LPNames = copy.deepcopy(myAcceptorAt.get_lonepair_names())
         #Get various LPs of the acceptor-Gamma will change. Create list of names of atoms in acceptorAt:
         acceptorParentChildNames = []
@@ -824,7 +841,7 @@ def compute_energy_as_donor(acceptorAt, hh_coord, donorAt, attractive = 1, atype
     else:
         hPresent =0
 
-        if(atom1.id == 'N'):
+        if(atom1.id == 'N' and not lig.is_ligand_atom(atom1)):
             hPresent =-1
             for at in atom1.parent.child_list:
                 if(at.id == 'H'):

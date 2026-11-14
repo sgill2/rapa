@@ -68,6 +68,35 @@ $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out
   This will generate output files in the folder `1bcd_noH_outputs`: `1bcd_noH_0.pdb`, `1bcd_noH_1.pdb`, etc
   
 
+##### `--ligand` (Optional)
+- **Type:** String (comma-separated residue names)
+- **Description:** Includes the named HETATM residues (ligands) as fixed hydrogen-bond partners when RAPA scores states. Ligand atoms are typed from their element and the hydrogens in the input PDB: O bonded to H is donor/acceptor, O without H is an acceptor, N bonded to H is a donor, N without H is an acceptor. Ligand hydrogens in the input are kept (in the output too). Ligand lone pairs are assumed to point straight at their partner (best-case geometry). **Provide the ligand with explicit hydrogens:** without them donors cannot be identified, so only the ligand's O atoms are used (as acceptors) and a warning is written to the `.info` file.
+- **Example:**
+  ```bash
+  $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb --ligand 189
+  ```
+
+##### `--fix` (Optional)
+- **Type:** String, `CHAIN:RESNUM:STATE` (comma-separated or repeated)
+- **Description:** Pins residues to a state instead of letting RAPA assign them; RAPA then assigns everything else around them. States: `HID`, `HIE`, `HIP`, `ASN`, `GLN`, `ASP`, `GLU`, plus `HIDR`, `HIER`, `HIPR`, `ASNR`, `GLNR` for a side chain flipped 180° relative to the input. ASH/GLH cannot be pinned. When one ASP/GLU of an interacting pair is pinned, its partner is kept deprotonated too.
+- **Example:**
+  ```bash
+  $<path to rapa folder>/src/rapa.py -pID 1bcd_noH.pdb --fix A:64:HIP,A:67:ASNR
+  ```
+
+##### `--around` (Optional, requires `--ligand`)
+- **Type:** Float (Å)
+- **Description:** Only assigns HIS/ASN/GLN/ASP/GLU residues with any atom within this distance of the `--ligand` residues. All other residues keep their input state (HID/HIE/HIP/ASH/GLH names are kept; an unspecified HIS becomes HIE). Much faster on large systems. Note that kept ASH/GLH residues outside the region do not contribute hydrogen-bond energy to residues inside it.
+- **Example:**
+  ```bash
+  $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb --ligand 189 --around 8
+  ```
+
+##### `--max_outputs` (Optional)
+- **Type:** Integer
+- **Default:** `0` (no limit)
+- **Description:** Writes at most this many output PDB files. Degenerate states are explored lowest-energy first, so the first N combinations are kept. If the cap is reached, a warning is written to the `.info` file.
+
 ##### Listing Available Options  
 Use the `-h` flag to view all available command-line options:  
 ```bash  

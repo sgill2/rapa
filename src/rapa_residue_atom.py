@@ -116,7 +116,11 @@ class rapa_atom(Bio.PDB.Atom.Atom):
         self.coord = atom.coord
         self.bfactor = atom.get_bfactor()
         self.coord_vector = atom.get_vector()
-        self.atomBehavior = self.set_default_behavior()
+        if getattr(self.parent, 'is_ligand', False):
+            # ligand atoms are typed once from their element and hydrogens (see ligand.py)
+            self.atomBehavior = getattr(atom, 'ligand_behavior', gc.doesNothing)
+        else:
+            self.atomBehavior = self.set_default_behavior()
         
 
 # Figure out if atom is part of backbone or not
@@ -125,6 +129,8 @@ class rapa_atom(Bio.PDB.Atom.Atom):
        """  gives info regarding if provided atom is part of backbone.
             Note:Treating Proline's N as part of backbone """
 
+       if getattr(self.parent, 'is_ligand', False):
+           return 0
        return 1 if self.name in gc.atoms_backbone else 0
        
 

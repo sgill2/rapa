@@ -32,6 +32,9 @@ out_folder = ''
 out_info_file = ''
 MAX_ITER = 512 # maximum loop for recursive, just as insurance
 ECutOff = 1.0 ##Degenerate cases # this will be set when user specified "--single_pdb_out"
+max_outputs = 0 # cap on number of output PDBs (0 = no cap), set by --max_outputs
+outputs_truncated = False # set to True when the --max_outputs cap stops further branching
+ligand_hbond_H_dist = 1.15 # max ligand heavy atom-H distance (Angstrom) to count the H as bonded
 
 ##### global constants
 

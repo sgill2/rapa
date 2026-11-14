@@ -331,7 +331,7 @@ def get_donor_acceptor_list(structure, aaType = 'ALL'):
 
     for residue in structure.get_residues():
         r = rra.rapa_residue(residue)
-        if r.is_valid_amino_acid():
+        if r.is_valid_amino_acid() or getattr(residue, 'is_ligand', False):
             for atom in residue:
                 a = rra.rapa_atom(atom)
                 abehav = a.get_behavior()[0] 
@@ -375,7 +375,7 @@ def get_known_donor_acceptor_list_for_one_atom(structure, at, aaType = 'ALL'):
        
     for residue in structure.get_residues():
         r = rra.rapa_residue(residue)
-        if r.is_valid_amino_acid():
+        if r.is_valid_amino_acid() or getattr(residue, 'is_ligand', False):
             for atom in residue:
                 myACurr = rra.rapa_atom(atom)
                 #checking if the residue is know, or part of backbone or atom is part of parent residue
@@ -644,16 +644,19 @@ def setup_structure(protID, outFolder = '.', fName = None):
     structure = parser.get_structure(protID, protPDBfile) 
     return structure
 
-def change_HIDEP_ASH_GLH(structure):
+def change_HIDEP_ASH_GLH(structure, keep_keys=None):
     """
         objective: If an HIE/HIP/HID is found, switch its name to HIS. 
                    If ASH is found, its name is changed to ASP.
                    IF GLH is found, its name is changed to GLU.
         input: original structure which may have HIE/HID/HIP
+               keep_keys: optional set of (chain, resnum, icode) whose input names are kept (not reset)
         output: structure: structure with only HIS
     """
 
     for res in structure.get_residues():
+        if keep_keys and (res.parent.id, res.id[1], res.id[2].strip()) in keep_keys:
+            continue
         #If residue name is HIE/HID/HIP-then rename it to HIS
         if(res.resname == 'HIE' or res.resname == 'HID' or res.resname == 'HIP'):
             structure[res.parent.parent.id][res.parent.id][res.id].resname = 'HIS'
