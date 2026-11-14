@@ -10,7 +10,7 @@ The code follows the following flowchart (fig1 in the [paper](https://pubs.acs.o
 
 # 3. Getting started
 
-Minimum of Python 3.6 is required.
+Minimum of Python 3.9 is required.
 
 ## Installation
 1. Download or git clone using: https://github.com/Ventus-Therapeutics/rapa.git

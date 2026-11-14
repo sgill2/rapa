@@ -72,21 +72,19 @@ def is_hydrogen_atom_line(line):
     return False
 
 
-def strip_hydrogens_from_pdb(protID, in_folder='.'):
+def strip_hydrogens_from_pdb(in_path, out_folder):
     """
-    Read {in_folder}/{protID}.pdb, remove all hydrogen ATOM/HETATM records,
-    and write the result to {in_folder}/{protID}_noH.pdb.
+    Read the PDB at in_path, remove all hydrogen ATOM/HETATM records, and
+    write the result to {out_folder}/{basename}_stripH.pdb.
 
-    Returns the protID (file prefix, without extension) of the newly written
-    hydrogen-free PDB file, so callers can substitute it wherever the
-    original protID was used.
+    This is an intermediate file: the caller is responsible for deleting it.
+    Returns the full path of the written file.
     """
-    in_path = os.path.join(in_folder, f"{protID}.pdb")
     if not os.path.exists(in_path):
         raise FileNotFoundError(f"Input PDB file not found: {in_path}")
 
-    out_protID = f"{protID}_noH"
-    out_path = os.path.join(in_folder, f"{out_protID}.pdb")
+    base = os.path.splitext(os.path.basename(in_path))[0]
+    out_path = os.path.join(out_folder, f"{base}_stripH.pdb")
 
     num_removed = 0
     num_kept = 0
@@ -102,7 +100,7 @@ def strip_hydrogens_from_pdb(protID, in_folder='.'):
     print(f"Removed {num_removed} hydrogen atom record(s) from {in_path}; "
           f"{num_kept} non-hydrogen atom record(s) written to {out_path}")
 
-    return out_protID
+    return out_path
 
 
 def parse_arguments(argv):
@@ -201,21 +199,24 @@ def main(argv):
     # Remove hydrogens from the input PDB before doing anything else.
     # RAPA requires hydrogen-free input; this makes that requirement automatic
     # instead of relying on the user to have pre-stripped hydrogens themselves.
-    args.protID = strip_hydrogens_from_pdb(args.protID, in_folder='.')
+    # The stripped copy is an intermediate file written to the output folder
+    # (the user's input folder is left untouched) and deleted at the end.
+    stripped_pdb_path = strip_hydrogens_from_pdb(pdb_file, args.output_folder)
 
     # then clean up the (hydrogen-free) input pdb file atom ID
-    pdb_file = f'./{args.protID}.pdb'
-    cleaned_id_pdb_name, cleaned_id_pdb_full_path = clean_pdb_atom_id(pdb_file)
+    cleaned_id_pdb_name, cleaned_id_pdb_full_path = clean_pdb_atom_id(stripped_pdb_path)
+    os.remove(stripped_pdb_path)
 
     # set up structure, know the number of model and chain in the pdb
-    structure = stp.setup_structure(args.protID, outFolder='.', fName=cleaned_id_pdb_name)
+    cleaned_id_pdb_prefix = os.path.splitext(cleaned_id_pdb_name)[0]
+    structure = stp.setup_structure(args.protID, outFolder=args.output_folder, fName=cleaned_id_pdb_prefix)
     chains = [item for sublist in structure for item in sublist]
     num_models = len(structure.child_list)
     num_chains = len(chains)
 
     if gc.log_file:
         print(f"The PDB ID being used: {args.protID} and start time is: "
-              f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
+              f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"\nThe structure has number of models {num_models}: {structure.child_list} and number of chains: {num_chains}: {chains}\n")
 
     with open(gc.out_info_file, "w") as fInfo:
@@ -319,7 +320,8 @@ def main(argv):
         print("Generating pymol script based on output PDB files")
         generate_multi_pdb_pymol_script(generated_files, all_unknown_res, f'{gc.out_folder}/inspect.pml')
 
-    lines = ['#'*100+'\n',f'Done. Execution time is: {prettify_time(total_run_time)}\n',f"Number of files generated: {len(generated_files)} and files generated:\n{'\n'.join(generated_files)}\n"]
+    generated_files_str = '\n'.join(generated_files)
+    lines = ['#'*100+'\n',f'Done. Execution time is: {prettify_time(total_run_time)}\n',f"Number of files generated: {len(generated_files)} and files generated:\n{generated_files_str}\n"]
     msg = ''.join(lines)
     with open(gc.out_info_file, "a") as fInfo:
         fInfo.write(msg)
