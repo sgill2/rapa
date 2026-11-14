@@ -167,7 +167,12 @@ def change_report():
     def signature(row):
         return (row['chain'], row['resnum'], row['icode'], row['output_name'], row['flipped'])
 
-    changed_per_file = [{signature(r): r for r in rows if r['changed']} for _, rows in _outputs]
+    # residues outside the --around region were not decided by RAPA (an unspecified HIS just gets the HIE
+    # default), so they are summarized in one line instead of being listed as changes
+    changed_per_file = [{signature(r): r for r in rows if r['changed'] and r['source'] != 'outside_region'}
+                        for _, rows in _outputs]
+    outside_defaults = sorted({(r['chain'], r['resnum'], r['icode']) for _, rows in _outputs for r in rows
+                               if r['changed'] and r['source'] == 'outside_region'})
     common = set.intersection(*(set(c) for c in changed_per_file))
 
     lines = ['#' * 100 + '\n', 'Changes relative to the input PDB (flipped = side chain rotated 180 degrees):\n']
@@ -184,6 +189,9 @@ def change_report():
             lines.append(f"Only in {name}:\n")
             lines += [f" {_describe(r)}\n" for r in specific] or [" none (other differences keep the input state)\n"]
 
+    if outside_defaults:
+        lines.append(f"Not listed: {len(outside_defaults)} residue(s) outside the --around region that were only set "
+                     f"to their default state (unspecified HIS -> HIE)\n")
     num_changed = len(common_rows)
     lines.append(f"{num_changed} residue(s) changed in every output; per-residue details for all outputs are in "
                  f"the _summary.csv/_summary.json files\n")

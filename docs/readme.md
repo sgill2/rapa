@@ -103,7 +103,7 @@ $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out
 - **Description:** Folder for all output files.
 
 ##### `--pymol` (Optional)
-- **Description:** Writes `inspect.pml`, a PyMOL script that loads every output PDB and colors the investigated residues by how their state was decided: red = degenerate (differs between outputs), slate = fixed (`--fix`), grey = metal (HIM/CYM), yellow = low confidence (next best state within 1 kcal/mol, or a tie), magenta = flipped, orange = protonation changed, green lines = investigated but unchanged. Each residue is labelled with its state(s) and energy gap (e.g. `HID +0.5 | HID flip -0.5` for a degenerate residue), each category is a named selection (`rapa_low_confidence`, ...), each non-trivial residue has a scene, and `--ligand` residues are shown in cyan. Run it with `pymol inspect.pml`.
+- **Description:** Writes `inspect.pml`, a PyMOL script that loads every output PDB and colors the investigated residues by how their state was decided: red = degenerate (differs between outputs), slate = fixed (`--fix`), grey = metal (HIM/CYM), yellow = low confidence (next best state within 1 kcal/mol, or a tie), magenta = flipped, orange = protonation changed, green lines = investigated but unchanged. Residues outside the `--around` region are not highlighted. Each residue is labelled with its state(s) and energy gap (e.g. `HID +0.5 | HID flip -0.5` for a degenerate residue), each category is a named selection (`rapa_low_confidence`, ...), each non-trivial residue has a scene, and `--ligand` residues are shown in cyan. Run it with `pymol inspect.pml`.
 
 ##### Listing Available Options  
 Use the `-h` flag to view all available command-line options:  
@@ -152,7 +152,7 @@ Information files with:
   - Number of output PDB files produced.  
   - File path of generated outputs.  
 
-- **Changes relative to the input:** every residue whose state differs from the input PDB (renamed and/or side chain flipped), with how it was decided and its energy margin. With several outputs, changes common to all outputs are listed first, then those specific to each output.
+- **Changes relative to the input:** every residue whose state differs from the input PDB (renamed and/or side chain flipped), with how it was decided and its energy margin. With several outputs, changes common to all outputs are listed first, then those specific to each output. Residues outside the `--around` region that were only given a default (an unspecified HIS becomes HIE) are counted in one line instead of listed; they remain in the summary files with `source = outside_region`.
 
 ### 4.1.1 [prefix]_summary.csv and [prefix]_summary.json
 One row per HIS/ASN/GLN/ASP/GLU-type residue (plus any other residue RAPA changed, e.g. CYS→CYM) per output PDB, for use in scripts and spreadsheets. The JSON file has the same rows grouped by output file, plus the run settings.
@@ -186,6 +186,18 @@ pdb file with sp2 hydrogen and lone pair coordinates computed and added.
 ---
 # 5. Example Runs  
 Example PDB files are available in the `examples` folder.
+- `1bcd_noH.pdb`, `1xl2_noH.pdb`: proteins prepared for RAPA (reference outputs in `solutions_to_compare`).
+- `1stp_btnH.pdb`: streptavidin with biotin, hydrogens added to biotin. Biotin's ureido O accepts an H-bond from Asn23, so this shows `--ligand` at work:
+  ```bash
+  $<path to rapa folder>/src/rapa.py -pID examples/1stp_btnH.pdb --ligand BTN --pymol
+  ```
+  With the ligand, Asn23's crystal orientation scores about 4 kcal/mol lower and its flipped orientation about 7 kcal/mol higher than without it (see `state_energies` in the summary files).
+
+### Tests
+`tests/test_ligand_1stp.py` checks ligand typing, the Asn23 energies above, `--around`, and the change report. It takes a few seconds:
+```bash
+$python tests/test_ligand_1stp.py      # or: pytest tests/
+```
 
 ---
 # 6. Copyright and license

@@ -22,9 +22,11 @@ def pymol_category(row):
         return 'rapa_fixed'
     if source == 'metal':
         return 'rapa_metal'
+    if source == 'outside_region':
+        return None  # not assigned by RAPA (outside --around), so not highlighted
     if source == 'assigned' and row['gap_to_next_best'] is not None and row['gap_to_next_best'] < LOW_CONFIDENCE_GAP:
         return 'rapa_low_confidence'
-    if source in ('outside_region', 'default', 'pair_partner_fixed') and not row['changed']:
+    if source in ('default', 'pair_partner_fixed') and not row['changed']:
         return None
     if row['flipped']:
         return 'rapa_flipped'
