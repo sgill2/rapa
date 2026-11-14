@@ -1939,7 +1939,7 @@ def resolve_residue_ambiguities_in_one_structure(structure, set_original_centroi
     # when it get out of the while loop
     # meaning there are no more unknown residue, then write to PDB file
     fPDBname = f"{outprefix}_{pdb_file_num[0]}.pdb"
-    fPDBfullPath = os.getcwd() + f"/{gc.out_folder}/{fPDBname}"
+    fPDBfullPath = os.path.abspath(os.path.join(gc.out_folder, fPDBname))
 
     if gc.log_file:
         print(f"No more unknown for this structure, Writing result to: {fPDBname}")

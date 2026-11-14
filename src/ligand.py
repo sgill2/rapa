@@ -27,6 +27,7 @@ Released under the MIT License (see LICENSE).
 import numpy as np
 
 import global_constants as gc
+from errors import RapaInputError
 
 
 def is_ligand_residue(residue):
@@ -105,13 +106,13 @@ def find_ligand_residues(structure, ligand_names):
 def setup_ligands(structure, ligand_names):
     """
     Find and type all ligand residues. Returns a list of report lines describing what was found.
-    Exits with an error if a requested ligand name is not present in the structure.
+    Raises RapaInputError if a requested ligand name is not present in the structure.
     """
     ligands = find_ligand_residues(structure, ligand_names)
     found_names = {res.resname.strip() for res in ligands}
     missing = sorted(set(ligand_names) - found_names)
     if missing:
-        raise SystemExit(f"ERROR: --ligand residue name(s) not found in the input PDB: {', '.join(missing)}")
+        raise RapaInputError(f"--ligand residue name(s) not found in the input PDB: {', '.join(missing)}")
 
     lines = []
     for res in ligands:

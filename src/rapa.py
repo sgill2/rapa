@@ -25,7 +25,9 @@ SOFTWARE.
 """
 
 import argparse
+import contextlib
 import sys, os
+from dataclasses import dataclass
 import timeit
 from datetime import datetime
 
@@ -36,7 +38,8 @@ import global_constants as gc
 import ligand as lig
 import residue_selection as rsel
 import summary
-from misc import prettify_time, Logger, generate_multi_pdb_pymol_script, clean_pdb_atom_id, put_pdb_record_back
+from errors import RapaInputError
+from misc import prettify_time, Logger, generate_pymol_script, clean_pdb_atom_id, put_pdb_record_back
 
 def get_unknown_list_for_pml(structure):
     all_unknown_residues = [] # this will be [('A', 253, 'HIE'), ('B', 101, 'SER')...]]
@@ -163,74 +166,113 @@ def parse_arguments(argv):
                              'first, so the first N combinations are kept. Default: 0 (no limit)')
 
     parser.add_argument('--pymol',
-                        help='If on, will generates a PyMOL script(.pml) that will load all the generated pdb files '
-                             'and make each unknown residues a scene',
+                        help='Write a PyMOL script (inspect.pml) that loads all output PDBs, colors the investigated '
+                             'residues by how their state was decided (changed, flipped, low confidence, degenerate, '
+                             'fixed, metal), labels them with state and energy gap, and stores a scene per residue',
                         action='store_true')
 
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.1.1 ')
 
-    args = parser.parse_args(argv)
+    parser.add_argument('--output_dir', dest='output_dir', type=str, default=None, metavar='',
+                        help='Folder for the outputs. Default: [out_name]_outputs in the current directory')
 
-    args.ligand_names = {name.strip() for name in args.ligand.split(',') if name.strip()}
+    args = parser.parse_args(argv)
+    try:
+        check_options(args)
+    except RapaInputError as e:
+        print(f"ERROR: {e}. Exiting...")
+        sys.exit(1)
+    return args
+
+
+def check_options(args):
+    """
+    Validate and normalize the options shared by the command line and run(). Raises RapaInputError.
+    Adds: input_pdb (path), protID (file name without extension), ligand_names, fixes.
+    """
+    # the input can be given with or without .pdb, and may include a directory
+    path = args.protID
+    if not os.path.isfile(path) and os.path.isfile(path + '.pdb'):
+        path = path + '.pdb'
+    if not os.path.isfile(path):
+        raise RapaInputError(f"the input pdb file {path} does not exist")
+    args.input_pdb = path
+    args.protID = os.path.splitext(os.path.basename(path))[0]
+
+    if isinstance(args.ligand, str):
+        args.ligand_names = {name.strip() for name in args.ligand.split(',') if name.strip()}
+    else:
+        args.ligand_names = {str(name).strip() for name in args.ligand}
     if args.around is not None:
         if not args.ligand_names:
-            parser.error('--around requires --ligand')
+            raise RapaInputError('--around requires --ligand')
         if args.around <= 0:
-            parser.error('--around must be a positive distance')
+            raise RapaInputError('--around must be a positive distance')
     if args.max_outputs < 0:
-        parser.error('--max_outputs must be 0 (no limit) or a positive number')
+        raise RapaInputError('--max_outputs must be 0 (no limit) or a positive number')
     args.fixes = rsel.parse_fix_args(args.fix)
 
-    # Protein id
-    # the input can either be 1bcd or 1bcd.pdb
-    # we're stripping the prefix
-    args.protID, _ = os.path.splitext(args.protID)
-
-    # set up outputs
-    if args.out_prefix == '':
+    if not args.out_prefix:
         args.out_prefix = args.protID
+    if not args.output_dir:
+        args.output_dir = f"{args.out_prefix}_outputs"
+    args.output_folder = args.output_dir
 
-    args.output_folder = f"{args.out_prefix}_outputs"
+
+def configure_run(args):
+    """Create the output folder and reset the module-level settings for a new run."""
     if os.path.isdir(args.output_folder):
         print(f"WARNING: specified output folder {args.output_folder} already exist, will overwrite")
     else:
         os.makedirs(args.output_folder)
     print(f"The calculation result will be saved to the folder: {args.output_folder}")
 
-    args.log_name = f"{args.output_folder}/{args.out_prefix}.log"
+    args.log_name = os.path.join(args.output_folder, f"{args.out_prefix}.log")
 
-    # pass to global variable
     gc.debug = args.debug
     gc.log_file = args.log_file
     gc.out_folder = args.output_folder
-    gc.out_info_file = f"{args.output_folder}/{args.out_prefix}.info"
-
+    gc.out_info_file = os.path.join(args.output_folder, f"{args.out_prefix}.info")
     gc.max_outputs = args.max_outputs
-
-    if args.single_pdb_out:
-        gc.ECutOff = 0
-    else:
-        gc.ECutOff = 1
-
-    return args
-
-def main(argv):
-
-    args = parse_arguments(argv)
-
-    if gc.log_file:
-        # If the log file option is on, print out info and direct stdout to file as well
-        sys.stdout = Logger(args.log_name)
+    gc.outputs_truncated = False
+    gc.ECutOff = 0 if args.single_pdb_out else 1
+    summary.reset()
 
 
+@dataclass
+class RapaResult:
+    """What a RAPA run produced. `residues` holds one summary row per residue per output (see summary.py)."""
+    output_files: list
+    output_folder: str
+    info_file: str
+    summary_csv: str
+    summary_json: str
+    residues: list
+    degenerate_residues: list
+    outputs_truncated: bool
+    pymol_script: str = None
+    log_file: str = None
+
+    @property
+    def changes(self):
+        """Rows for residues whose state differs from the input."""
+        return [row for row in self.residues if row['changed']]
+
+    def residues_in(self, output_file):
+        """Rows for one output file (full path or file name)."""
+        name = os.path.basename(output_file)
+        return [row for row in self.residues if row['output_file'] == name]
+
+
+def _run(args, program_call):
+    """Run RAPA for already-validated options. Returns a RapaResult."""
     starttime = timeit.default_timer()
-    print('PROGRAM CALL:python {}'.format(' '.join(sys.argv)))
+    print(f'PROGRAM CALL: {program_call}')
 
     # first check that the input pdb file exists
-    pdb_file = f'./{args.protID}.pdb'
+    pdb_file = args.input_pdb
     if not os.path.isfile(pdb_file):
-        print(f"ERROR: the input pdb file {pdb_file} does not exist. Exiting...")
-        sys.exit(1)
+        raise RapaInputError(f"the input pdb file {pdb_file} does not exist")
 
     # Remove hydrogens from the input PDB before doing anything else.
     # RAPA requires hydrogen-free input; this makes that requirement automatic
@@ -273,7 +315,7 @@ def main(argv):
         if args.ligand_names:
             lig.setup_ligands(structure, args.ligand_names)  # exits if a ligand name is not found
         rsel.validate_fixes(structure, args.fixes)
-    except SystemExit:
+    except RapaInputError:
         os.remove(cleaned_id_pdb_full_path)
         raise
     out_of_region_keys = set()
@@ -303,7 +345,7 @@ def main(argv):
         lastSerial, _ = hsp2.placeHydrogens_backbone(structure, lastSerial)
         # Adding hydrogen to side chains:
         lastSerial, _ = hsp2.add_sp2_sidechain_hydrogens(structure, lastSerial)
-        fName = f'{args.output_folder}/{args.protID}_HLPsp2.pdb'
+        fName = os.path.join(args.output_folder, f'{args.protID}_HLPsp2.pdb')
         stp.write_to_PDB(structure, fName, removeHLP=False, removeHall=False, set_original_centroid=False)
         if gc.log_file:
             print("After adding the hydrogens....")
@@ -386,7 +428,7 @@ def main(argv):
         print(msg)
 
     # machine-readable per-residue summary and the human-readable change report
-    settings = {'input_pdb': f"{args.protID}.pdb", 'energy_cutoff_kcal_mol': gc.ECutOff,
+    settings = {'input_pdb': args.input_pdb, 'energy_cutoff_kcal_mol': gc.ECutOff,
                 'ligands': sorted(args.ligand_names), 'around_angstrom': args.around,
                 'fixed': {rsel.format_key(k): v for k, v in args.fixes.items()},
                 'keep_asp_glu': args.keep_asp_glu, 'max_outputs': args.max_outputs or None,
@@ -404,9 +446,13 @@ def main(argv):
             fInfo.write(msg)
         print(msg)
 
+    pymol_script = None
     if args.pymol:
         print("Generating pymol script based on output PDB files")
-        generate_multi_pdb_pymol_script(generated_files, all_unknown_res, f'{gc.out_folder}/inspect.pml')
+        pymol_script = os.path.join(args.output_folder, 'inspect.pml')
+        rows_by_file = dict(summary.get_outputs())
+        generate_pymol_script([(f, rows_by_file.get(os.path.basename(f), [])) for f in generated_files],
+                              pymol_script, ligand_names=args.ligand_names)
 
     generated_files_str = '\n'.join(generated_files)
     lines = ['#'*100+'\n',f'Done. Execution time is: {prettify_time(total_run_time)}\n',f"Number of files generated: {len(generated_files)} and files generated:\n{generated_files_str}\n"]
@@ -426,7 +472,7 @@ def main(argv):
             fInfo.flush()
 
     if not args.keep_hlp:
-        file_hlp = f"{args.output_folder}/{args.protID}_HLPsp2.pdb"
+        file_hlp = os.path.join(args.output_folder, f"{args.protID}_HLPsp2.pdb")
         if os.path.exists(file_hlp):
             os.remove(file_hlp)
         else:
@@ -438,8 +484,82 @@ def main(argv):
     print("************************************************************")
     print(f"RAPA exiting. Run for the given PDB: {args.protID} is completed")
     print("************************************************************")
-    sys.exit()
 
+    return RapaResult(output_files=generated_files, output_folder=os.path.abspath(args.output_folder),
+                      info_file=gc.out_info_file, summary_csv=summary_csv, summary_json=summary_json,
+                      residues=[row for _, rows in summary.get_outputs() for row in rows],
+                      degenerate_residues=sorted(set(branched_residues)),
+                      outputs_truncated=gc.outputs_truncated, pymol_script=pymol_script,
+                      log_file=args.log_name if args.log_file else None)
+
+
+def _run_with_logging(args, program_call, verbose=True):
+    """Set up the run, send output to the log file (-l) and/or hide it (verbose=False), and always restore stdout."""
+    original_stdout = sys.stdout
+    logger = None
+    try:
+        with contextlib.ExitStack() as stack:
+            if not verbose:
+                devnull = stack.enter_context(open(os.devnull, 'w'))
+                stack.enter_context(contextlib.redirect_stdout(devnull))
+            configure_run(args)
+            if gc.log_file:
+                # If the log file option is on, print out info and direct stdout to file as well
+                logger = Logger(args.log_name)
+                sys.stdout = logger
+            try:
+                return _run(args, program_call)
+            finally:
+                if logger is not None:
+                    sys.stdout = logger.terminal
+                    logger.log.close()
+    finally:
+        sys.stdout = original_stdout
+
+
+def run(pdb, out_prefix=None, output_dir=None, ligands=(), fix=(), around=None, max_outputs=0,
+        single_output=False, keep_asp_glu=False, pymol=False, log=False, debug=False, keep_hlp=False,
+        hlp_known=False, verbose=False):
+    """
+    Run RAPA from Python.
+
+        result = rapa.run('1xl2.pdb', ligands=['189'], around=8, fix=['A:25:ASP'])
+        result.output_files      # paths of the output PDBs
+        result.changes           # residues whose state differs from the input
+        result.residues          # every residue row (see summary.py for the columns)
+
+    Arguments mirror the command-line options:
+        pdb           input PDB path (".pdb" may be omitted)
+        out_prefix    -o; output_dir: --output_dir
+        ligands       --ligand, a list of residue names
+        fix           --fix, a list of "CHAIN:RESNUM:STATE" strings
+        around        --around (Angstrom); max_outputs: --max_outputs
+        single_output -s; keep_asp_glu: -k; pymol: --pymol; log: -l; debug: -d
+        keep_hlp      -k_hlp; hlp_known: -hlp
+        verbose       print progress to stdout (default off)
+
+    Raises RapaInputError for invalid input or options. Returns a RapaResult.
+    """
+    if isinstance(fix, str):
+        fix = [fix]
+    args = argparse.Namespace(protID=str(pdb), out_prefix=out_prefix or '', output_dir=output_dir,
+                              single_pdb_out=single_output, log_file=log, debug=debug, keep_hlp=keep_hlp,
+                              keep_asp_glu=keep_asp_glu, HLPsp2_known=hlp_known, ligand=list(ligands),
+                              fix=list(fix), around=around, max_outputs=max_outputs, pymol=pymol)
+    check_options(args)
+    options = {k: v for k, v in dict(out_prefix=out_prefix, output_dir=output_dir, ligands=list(ligands),
+                                       fix=list(fix), around=around, max_outputs=max_outputs,
+                                       single_output=single_output, keep_asp_glu=keep_asp_glu).items() if v}
+    return _run_with_logging(args, f"rapa.run({str(pdb)!r}, {options})", verbose=verbose)
+
+
+def main(argv):
+    args = parse_arguments(argv)
+    try:
+        _run_with_logging(args, 'python {}'.format(' '.join(sys.argv)))
+    except RapaInputError as e:
+        print(f"ERROR: {e}. Exiting...")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

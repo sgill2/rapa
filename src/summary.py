@@ -59,7 +59,7 @@ def set_input_names(structure):
 
 
 def _round(value):
-    return None if value is None else round(float(value), 3)
+    return None if value is None else round(float(value), 3) + 0.0  # + 0.0 turns -0.0 into 0.0
 
 
 def _state_label(res):
@@ -111,6 +111,11 @@ def record_output(pdb_path, structure):
         if res.resname in FAMILY or input_name in FAMILY or hasattr(res, 'rapa_source'):
             rows.append(_row(os.path.basename(pdb_path), res))
     _outputs.append((os.path.basename(pdb_path), rows))
+
+
+def get_outputs():
+    """[(output file name, [row dicts])] for every output written so far in this run."""
+    return [(name, [dict(r) for r in rows]) for name, rows in _outputs]
 
 
 def write_files(out_folder, prefix, settings):

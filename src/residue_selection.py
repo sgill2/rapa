@@ -14,6 +14,7 @@ import Bio.PDB
 import state_assignment as sa
 import ligand as lig
 import global_constants as gc
+from errors import RapaInputError
 
 # states a residue can be pinned to with --fix, keyed by the residue's generic name.
 # an "R" suffix means the side chain is flipped 180 degrees relative to the input
@@ -51,7 +52,7 @@ def parse_fix_args(fix_args):
                 continue
             parts = entry.split(':')
             if len(parts) != 3:
-                raise SystemExit(f"ERROR: --fix entry '{entry}' should look like CHAIN:RESNUM:STATE, e.g. A:94:HIP")
+                raise RapaInputError(f"--fix entry '{entry}' should look like CHAIN:RESNUM:STATE, e.g. A:94:HIP")
             chain, num_str, state = parts[0].strip(), parts[1].strip(), parts[2].strip().upper()
             icode = ''
             if num_str and num_str[-1].isalpha():
@@ -59,10 +60,10 @@ def parse_fix_args(fix_args):
             try:
                 num = int(num_str)
             except ValueError:
-                raise SystemExit(f"ERROR: --fix entry '{entry}' has an invalid residue number '{parts[1]}'")
+                raise RapaInputError(f"--fix entry '{entry}' has an invalid residue number '{parts[1]}'")
             all_states = {s for states in FIXABLE_STATES.values() for s in states}
             if state not in all_states:
-                raise SystemExit(f"ERROR: --fix entry '{entry}': unsupported state '{state}'. "
+                raise RapaInputError(f"--fix entry '{entry}': unsupported state '{state}'. "
                                  f"Supported states: {', '.join(sorted(all_states))} (R = flipped side chain). "
                                  f"ASH/GLH cannot be pinned.")
             fixes[(chain, num, icode)] = state
@@ -74,10 +75,10 @@ def validate_fixes(structure, fixes):
     residues = {residue_key(res): res for res in structure.get_residues() if res.id[0] == ' '}
     for key, state in fixes.items():
         if key not in residues:
-            raise SystemExit(f"ERROR: --fix residue {format_key(key)} not found in the input PDB")
+            raise RapaInputError(f"--fix residue {format_key(key)} not found in the input PDB")
         generic = GENERIC_NAME.get(residues[key].resname)
         if generic is None or state not in FIXABLE_STATES[generic]:
-            raise SystemExit(f"ERROR: --fix {format_key(key)}:{state} does not match residue type "
+            raise RapaInputError(f"--fix {format_key(key)}:{state} does not match residue type "
                              f"{residues[key].resname}")
 
 
