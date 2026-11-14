@@ -35,6 +35,7 @@ import state_assignment as sa
 import global_constants as gc
 import ligand as lig
 import residue_selection as rsel
+import summary
 from misc import prettify_time, Logger, generate_multi_pdb_pymol_script, clean_pdb_atom_id, put_pdb_record_back
 
 def get_unknown_list_for_pml(structure):
@@ -279,6 +280,9 @@ def main(argv):
     if args.around is not None:
         out_of_region_keys = rsel.get_out_of_region_keys(structure, args.ligand_names, args.around)
 
+    # remember the input residue names for the change report
+    summary.set_input_names(structure)
+
     # rename HID/HIE/HIP/ASH/GLH->HIS/HIS/HIS/ASP/GLU
     # residues outside the --around region (and not --fix'ed) keep their input names
     stp.change_HIDEP_ASH_GLH(structure, keep_keys=out_of_region_keys - set(args.fixes))
@@ -380,6 +384,18 @@ def main(argv):
             fInfo.write(msg)
             fInfo.flush()
         print(msg)
+
+    # machine-readable per-residue summary and the human-readable change report
+    settings = {'input_pdb': f"{args.protID}.pdb", 'energy_cutoff_kcal_mol': gc.ECutOff,
+                'ligands': sorted(args.ligand_names), 'around_angstrom': args.around,
+                'fixed': {rsel.format_key(k): v for k, v in args.fixes.items()},
+                'keep_asp_glu': args.keep_asp_glu, 'max_outputs': args.max_outputs or None,
+                'outputs_truncated': gc.outputs_truncated}
+    summary_csv, summary_json = summary.write_files(args.output_folder, args.out_prefix, settings)
+    msg = summary.change_report() + f"Summary files: {summary_csv}, {summary_json}\n"
+    with open(gc.out_info_file, "a") as fInfo:
+        fInfo.write(msg)
+    print(msg)
 
     if gc.outputs_truncated:
         msg = (f"WARNING: output capped at {gc.max_outputs} PDB file(s) by --max_outputs; "

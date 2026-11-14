@@ -123,6 +123,22 @@ Information files with:
   - Number of output PDB files produced.  
   - File path of generated outputs.  
 
+- **Changes relative to the input:** every residue whose state differs from the input PDB (renamed and/or side chain flipped), with how it was decided and its energy margin. With several outputs, changes common to all outputs are listed first, then those specific to each output.
+
+### 4.1.1 [prefix]_summary.csv and [prefix]_summary.json
+One row per HIS/ASN/GLN/ASP/GLU-type residue (plus any other residue RAPA changed, e.g. CYS→CYM) per output PDB, for use in scripts and spreadsheets. The JSON file has the same rows grouped by output file, plus the run settings.
+
+| Column | Meaning |
+|---|---|
+| `output_file`, `chain`, `resnum`, `icode` | which output and residue |
+| `input_name`, `output_name` | residue name in the input and in this output |
+| `flipped` | side chain rotated 180° relative to the input |
+| `changed` | name changed or side chain flipped |
+| `source` | how the state was decided: `assigned` (lowest energy), `degenerate_branch` (one of several states within the cutoff), `no_polar_neighbors`, `no_known_neighbors`, `metal`, `fixed` (`--fix`), `outside_region` (`--around`), `pair_partner_fixed`, `default` (not investigated) |
+| `energy` | H-bond energy (kcal/mol) of the chosen state |
+| `gap_to_next_best` | energy of the best alternative minus the chosen one; larger = more confident, 0 = tie settled by RAPA's default rules, negative = not the lowest-energy state (degenerate branch or HIP). HIP/HIPR are not counted as alternatives because RAPA chooses HIP with its own rule (both nitrogens favorable) |
+| `state_energies` | energies of all candidate states (e.g. `HID:-2.05;HIE:3.68;...`) |
+
 ### 4.2 [input_pdb_prefix or specified_output_prefix]_#.pdb   
 Final PDB files with states that RAPA picked based on the calculation.
 ### 4.3 [input_pdb_prefix or specified_output_prefix].log (Generated if `-l` flag is on)

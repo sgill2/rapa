@@ -41,6 +41,7 @@ import hydrogen_placement_sp2 as hsp2
 import hydrogen_placement_sp3 as hsp3
 import close_atoms as cats
 import global_constants as gc
+import summary
 
 
 def setup_HIS(HISres, structure, HIStype = None):
@@ -1023,6 +1024,18 @@ def compute_energy_for_all_states(unknownRes, structStates):
         enSumTotalResState, enSumForHvys = compute_energy_for_given_state(resState)
         energyList.append([resState, enSumTotalResState, structState, resState, con ])
 
+    # remember the energy of every candidate state on the residues, for the output summary.
+    # the dict is shared, so states evaluated later (HIP) can add to it
+    state_energies = {entry[-1]: float(entry[1]) for entry in energyList}
+    for key, structState in structStates.items():
+        for res in {unknownRes, unknownRes0[-1]}:
+            res_in_state = structState[modelID][res.parent.id][res.id]
+            res_in_state.rapa_state_energies = state_energies
+            matches = [c for c in state_energies if key.endswith(c)]
+            if matches:
+                res_in_state.rapa_state = max(matches, key=len)
+                res_in_state.rapa_energy = state_energies[res_in_state.rapa_state]
+
     return energyList, resStates
 
 
@@ -1078,6 +1091,7 @@ def set_state(unknownRes, res2keep, nameOfS2keep, changeVal, branchedS, MSG):
     modelID = unknownRes.parent.parent.id
     chainID = unknownRes.parent.id
     struct[modelID][chainID][unknownRes.id].isKnown = 1
+    struct[modelID][chainID][unknownRes.id].rapa_source = 'assigned'
 
     if(unknownRes.resname == 'ASP' or unknownRes.resname == 'GLU'):
         sUn = unknownRes.parent.parent.parent
@@ -1085,6 +1099,7 @@ def set_state(unknownRes, res2keep, nameOfS2keep, changeVal, branchedS, MSG):
         modelIDpair = unknownASP_GLUpair.parent.parent.id
         chainIDpair = unknownASP_GLUpair.parent.id
         struct[modelIDpair][chainIDpair][unknownASP_GLUpair.id].isKnown = 1
+        struct[modelIDpair][chainIDpair][unknownASP_GLUpair.id].rapa_source = 'assigned'
 
     structure = copy.deepcopy(branchedS[nameOfS2keep])
 
@@ -1150,6 +1165,15 @@ def get_HIP_energies(resHIP, resHIPR):
 
     enSumTotND1Ro, enSumForND1Ro = compute_energy_for_given_atoms(resHIPR, [resHIPR['ND1']])
     enSumTotNE2Ro, enSumForNE2Ro = compute_energy_for_given_atoms(resHIPR, [resHIPR['NE2']])
+
+    # remember the HIP energies for the output summary
+    resHIP.rapa_energy = float(enSumTotND1 + enSumTotNE2)
+    resHIPR.rapa_energy = float(enSumTotND1Ro + enSumTotNE2Ro)
+    resHIP.rapa_state, resHIPR.rapa_state = 'HIP', 'HIPR'
+    for res in (resHIP, resHIPR):
+        if hasattr(res, 'rapa_state_energies'):
+            res.rapa_state_energies['HIP'] = resHIP.rapa_energy
+            res.rapa_state_energies['HIPR'] = resHIPR.rapa_energy
 
     return enSumTotND1, enSumTotNE2, enSumTotND1Ro, enSumTotNE2Ro
 
@@ -1596,6 +1620,7 @@ def set_states_around_metal(structure):
                     else:
                         structure[modelID][chainID][res_from_structure.id].resname = set_state
                     structure[modelID][chainID][res_from_structure.id].isKnown = 1
+                    structure[modelID][chainID][res_from_structure.id].rapa_source = 'metal'
         return structure
 
     else:
@@ -1688,6 +1713,7 @@ def iterate_list_of_unknown_residues_and_set_states(structure):
                 if unknownRes.resname == 'HIS':
                     setup_HIS(unknownRes, structure, 'HIE')
                 structure[modelID][chainID][unknownRes.id].isKnown = 1
+                structure[modelID][chainID][unknownRes.id].rapa_source = 'no_polar_neighbors'
                 unknownRes.isKnown = 1
                 changeVal += 1
             # for other residues, do nothing, they would remain unknown
@@ -1844,6 +1870,7 @@ def resolve_residue_ambiguities_in_one_structure(structure, set_original_centroi
                 # exit
                 for unknown_res in unknown_res_list:
                     structure[unknown_res.parent.parent.id][unknown_res.parent.id][unknown_res.id].isKnown = 1
+                    structure[unknown_res.parent.parent.id][unknown_res.parent.id][unknown_res.id].rapa_source = 'no_known_neighbors'
 
                 # update the number of unknown residue here for the loop
                 unknown_res_list = stp.get_unknown_residue_list(structure)
@@ -1874,12 +1901,14 @@ def resolve_residue_ambiguities_in_one_structure(structure, set_original_centroi
 
                 structBranch = skpInfo[0][-1][struc_name]
                 structBranch[modelID][chainID][res_to_be_branch.id].isKnown = 1
+                structBranch[modelID][chainID][res_to_be_branch.id].rapa_source = 'degenerate_branch'
                 if res_to_be_branch.resname in ['ASP', 'GLU']:
                     sUn = res_to_be_branch.parent.parent.parent
                     unknownASPpair = get_ASP_GLU_pair(res_to_be_branch, sUn, gc.deltaD)
                     modelID_ASPpair = unknownASPpair.parent.parent.id
                     chainID_ASPpair = unknownASPpair.parent.id
                     structBranch[modelID_ASPpair][chainID_ASPpair][unknownASPpair.id].isKnown = 1
+                    structBranch[modelID_ASPpair][chainID_ASPpair][unknownASPpair.id].rapa_source = 'degenerate_branch'
                 if gc.log_file:
                     print(f"Processing {res_to_be_branch}'s degenerate states: {count+1}/{len(all_degen_struc_names)}")
                     print("Start another 'resolve_residue_ambiguities_in_one_structure call'")
@@ -1919,6 +1948,7 @@ def resolve_residue_ambiguities_in_one_structure(structure, set_original_centroi
     stp.detect_clash_within_residue_for_all_residues(structure)
 
     generated_files.append(fPDBfullPath)
+    summary.record_output(fPDBfullPath, structure)
     # keep a track on number of pdb files written
     pdb_file_num[0] += 1
     stp.write_to_PDB(structure, fPDBfullPath, removeHLP=True, set_original_centroid=set_original_centroid)

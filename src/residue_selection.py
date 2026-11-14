@@ -104,7 +104,7 @@ def get_out_of_region_keys(structure, ligand_names, distance):
             if res.id[0] == ' ' and res.resname in GENERIC_NAME and residue_key(res) not in inside}
 
 
-def pin_residue(structure, residue, state):
+def pin_residue(structure, residue, state, source='fixed'):
     """Set a residue to `state` (one of FIXABLE_STATES) and mark it known so RAPA will not change it."""
     model_id = residue.get_parent().get_parent().id
     chain_id = residue.get_parent().id
@@ -117,6 +117,7 @@ def pin_residue(structure, residue, state):
     elif res.resname in ('ASN', 'GLN') and state.endswith('R'):
         sa.setup_rotamer_in_structure(res, structure)
     res.isKnown = 1
+    res.rapa_source = source
 
 
 def release_orphaned_ASP_GLU(structure):
@@ -130,6 +131,7 @@ def release_orphaned_ASP_GLU(structure):
             partner = sa.get_ASP_GLU_pair(res, structure, gc.deltaD)
             if partner is None or partner.isKnown == 1:
                 res.isKnown = 1
+                res.rapa_source = 'pair_partner_fixed'
                 released.append(res)
     return released
 
@@ -151,12 +153,13 @@ def apply_pins(structure, fixes, out_of_region_keys):
         res = residues.get(key)
         if res is None:
             continue
+        res.rapa_source = 'outside_region'
         if res.resname == 'HIS':
             # HID/HIE/HIP in the input keep their name; only an unspecified HIS gets here
-            pin_residue(structure, res, 'HIE')
+            pin_residue(structure, res, 'HIE', source='outside_region')
             kept.append(f"{format_key(key)} HIS->HIE")
         elif res.resname in ('ASN', 'GLN', 'ASP', 'GLU'):
-            pin_residue(structure, res, res.resname)
+            pin_residue(structure, res, res.resname, source='outside_region')
             kept.append(f"{format_key(key)} {res.resname}")
     if out_of_region_keys:
         lines.append(f" {len(out_of_region_keys)} HIS/ASN/GLN/ASP/GLU-type residue(s) outside the --around "
