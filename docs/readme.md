@@ -10,7 +10,7 @@ The code follows the following flowchart (fig1 in the [paper](https://pubs.acs.o
 
 # 3. Getting started
 
-Minimum of Python 3.9 is required.
+Minimum of Python 3.10 is required.
 
 ## Installation
 1. Download or git clone using: https://github.com/Ventus-Therapeutics/rapa.git
@@ -209,7 +209,7 @@ $pytest                     # about 15 seconds
 - `tests/test_reference_outputs.py` runs the 1bcd and 1xl2 examples and checks that the output PDBs (atoms, residue names, coordinates within 0.01 Å) and every residue's state, flip, decision source and energies (within 0.02 kcal/mol) match `examples/solutions_to_compare/`.
 - `tests/test_ligand_1stp.py` checks ligand typing, the Asn23 energies above, `--around`, and the change report.
 
-Both also run without pytest, e.g. `python tests/test_reference_outputs.py`. GitHub Actions runs them on Python 3.9-3.13 for every push and pull request (`.github/workflows/tests.yml`).
+Both also run without pytest, e.g. `python tests/test_reference_outputs.py`. GitHub Actions runs them on Python 3.10-3.13 for every push and pull request (`.github/workflows/tests.yml`).
 
 If a change to RAPA's results is intended, regenerate the reference outputs and review the differences before committing:
 ```bash

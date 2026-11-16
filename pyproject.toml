@@ -9,7 +9,7 @@ description = "RAPA: Rotamer And Protonation Assignment for protein structures"
 readme = "docs/readme.md"
 license = {file = "LICENSE"}
 authors = [{name = "Ventus Therapeutics U.S., Inc."}]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = ["biopython", "numpy"]
 
 [project.optional-dependencies]

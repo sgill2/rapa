@@ -670,8 +670,8 @@ def get_ASP_GLU_pair(currASP_GLU, structure, ASP_GLUdist):
     for atom in unknownASP_GLUatom:
         unknownASP_GLUlist.append(atom.parent)
     
-    #create a set so we can have the unique ASP residues
-    unknownASP_GLUset = set(unknownASP_GLUlist)
+    #unique ASP/GLU residues, in the order they were found (a plain set would iterate in a run-dependent order)
+    unknownASP_GLUset = list(dict.fromkeys(unknownASP_GLUlist))
     #since this code is meant for only diad!
 
     if(len(unknownASP_GLUset)> gc.numASPsGLUs-1):
@@ -682,7 +682,10 @@ def get_ASP_GLU_pair(currASP_GLU, structure, ASP_GLUdist):
     if(not unknownASP_GLUset):
         unknownASP_GLUpair = None
     else: 
-        unknownASP_GLUpair = list(unknownASP_GLUset)[0]
+        # if there are several candidates, pair with the one whose oxygen is closest (ties broken by residue id)
+        # so the choice is deterministic
+        closest = min(unknownASP_GLUatomInfo, key=lambda info: (info[6], info[4].full_id))
+        unknownASP_GLUpair = closest[4]
         
         for unknownASP_GLU in unknownASP_GLUset:
             if gc.log_file:
