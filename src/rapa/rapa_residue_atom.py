@@ -21,8 +21,7 @@ SOFTWARE.
 
 import Bio
 from Bio import PDB
-import global_constants as gc
-
+from . import global_constants as gc
 def if_two_atoms_are_same(atom1, atom2):
     """
     Checking if two atom object are the same by checking the coordinates, residue number, and name

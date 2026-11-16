@@ -31,11 +31,10 @@ from Bio import PDB
 from Bio.PDB import calc_angle, Vector
 import numpy as np
 import copy
-import setup_protein as stp
-import rapa_residue_atom as rra
-import global_constants as gc
-import ligand as lig
-
+from . import setup_protein as stp
+from . import rapa_residue_atom as rra
+from . import global_constants as gc
+from . import ligand as lig
 def hbond_energy(r, theta, gamma, attractive=True,
                  D1=5.3690476811615016,D2=27.58319209788471,D3=39.701896317848934,D4=4.854675162065331e-10,D5=0.09999999999999998,
                  r1=-0.07438325810984132,r2=1.400238259764079,r3=0.4857252493470585,r4=-0.8284743134969731,

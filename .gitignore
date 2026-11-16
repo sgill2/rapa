@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+# RAPA run outputs (the reference outputs in examples/solutions_to_compare are tracked)
+/*_outputs/
+/examples/*_outputs/

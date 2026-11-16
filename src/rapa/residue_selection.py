@@ -11,10 +11,10 @@ Released under the MIT License (see LICENSE).
 
 import Bio.PDB
 
-import state_assignment as sa
-import ligand as lig
-import global_constants as gc
-from errors import RapaInputError
+from . import state_assignment as sa
+from . import ligand as lig
+from . import global_constants as gc
+from .errors import RapaInputError
 
 # states a residue can be pinned to with --fix, keyed by the residue's generic name.
 # an "R" suffix means the side chain is flipped 180 degrees relative to the input

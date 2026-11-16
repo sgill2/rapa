@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rapa"
+dynamic = ["version"]
+description = "RAPA: Rotamer And Protonation Assignment for protein structures"
+readme = "docs/readme.md"
+license = {file = "LICENSE"}
+authors = [{name = "Ventus Therapeutics U.S., Inc."}]
+requires-python = ">=3.9"
+dependencies = ["biopython", "numpy"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+rapa = "rapa.cli:console_main"
+
+[project.urls]
+Paper = "https://pubs.acs.org/doi/full/10.1021/acs.jcim.5c00859"
+Source = "https://github.com/Ventus-Therapeutics/rapa"
+
+[tool.setuptools.dynamic]
+version = {attr = "rapa.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

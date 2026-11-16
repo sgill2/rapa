@@ -26,8 +26,8 @@ Released under the MIT License (see LICENSE).
 
 import numpy as np
 
-import global_constants as gc
-from errors import RapaInputError
+from . import global_constants as gc
+from .errors import RapaInputError
 
 
 def is_ligand_residue(residue):

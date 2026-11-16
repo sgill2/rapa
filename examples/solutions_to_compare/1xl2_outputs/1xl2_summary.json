@@ -1,0 +1,586 @@
+{
+  "settings": {
+    "input_pdb": "1xl2_noH.pdb",
+    "energy_cutoff_kcal_mol": 1,
+    "ligands": [],
+    "around_angstrom": null,
+    "fixed": {},
+    "keep_asp_glu": false,
+    "max_outputs": null,
+    "outputs_truncated": false
+  },
+  "outputs": [
+    {
+      "file": "1xl2_0.pdb",
+      "residues": [
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 2,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -3.393,
+          "gap_to_next_best": 9.129,
+          "state_energies": {
+            "GLN": -3.393,
+            "GLNR": 5.736
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 7,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "no_polar_neighbors",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 18,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "no_polar_neighbors",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 21,
+          "icode": "",
+          "input_name": "GLU",
+          "output_name": "GLU",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 25,
+          "icode": "",
+          "input_name": "ASP",
+          "output_name": "ASH",
+          "flipped": false,
+          "changed": true,
+          "source": "assigned",
+          "energy": 0.0,
+          "gap_to_next_best": 2.216,
+          "state_energies": {
+            "ASH_OD1A": 2.216,
+            "ASH_OD1B": 2.216,
+            "ASH_OD2A": 0.0,
+            "ASH_OD2B": 2.216
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 29,
+          "icode": "",
+          "input_name": "ASP",
+          "output_name": "ASP",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 30,
+          "icode": "",
+          "input_name": "ASP",
+          "output_name": "ASP",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 34,
+          "icode": "",
+          "input_name": "GLU",
+          "output_name": "GLU",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 35,
+          "icode": "",
+          "input_name": "GLU",
+          "output_name": "GLU",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 58,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -4.963,
+          "gap_to_next_best": 12.588,
+          "state_energies": {
+            "GLN": -4.963,
+            "GLNR": 7.625
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 60,
+          "icode": "",
+          "input_name": "ASP",
+          "output_name": "ASP",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 61,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "no_polar_neighbors",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 65,
+          "icode": "",
+          "input_name": "GLU",
+          "output_name": "GLU",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 69,
+          "icode": "",
+          "input_name": "HIS",
+          "output_name": "HIE",
+          "flipped": false,
+          "changed": true,
+          "source": "assigned",
+          "energy": 0.0,
+          "gap_to_next_best": 0.0,
+          "state_energies": {
+            "HID": 0.0,
+            "HIDR": 2.5,
+            "HIE": 0.0,
+            "HIER": 0.0,
+            "HIP": 0.0,
+            "HIPR": 2.5
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 83,
+          "icode": "",
+          "input_name": "ASN",
+          "output_name": "ASN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -2.92,
+          "gap_to_next_best": 19.017,
+          "state_energies": {
+            "ASN": -2.92,
+            "ASNR": 16.097
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 88,
+          "icode": "",
+          "input_name": "ASN",
+          "output_name": "ASN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -6.183,
+          "gap_to_next_best": 20.718,
+          "state_energies": {
+            "ASN": -6.183,
+            "ASNR": 14.534
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 92,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": 0.069,
+          "gap_to_next_best": 10.442,
+          "state_energies": {
+            "GLN": 0.069,
+            "GLNR": 10.511
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "A",
+          "resnum": 98,
+          "icode": "",
+          "input_name": "ASN",
+          "output_name": "ASN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": 0.0,
+          "gap_to_next_best": 0.0,
+          "state_energies": {
+            "ASN": 0.0,
+            "ASNR": 0.0
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 2,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -3.836,
+          "gap_to_next_best": 10.648,
+          "state_energies": {
+            "GLN": -3.836,
+            "GLNR": 6.813
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 7,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": 0.0,
+          "gap_to_next_best": 2.5,
+          "state_energies": {
+            "GLN": 0.0,
+            "GLNR": 2.5
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 18,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "no_polar_neighbors",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 21,
+          "icode": "",
+          "input_name": "GLU",
+          "output_name": "GLU",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 25,
+          "icode": "",
+          "input_name": "ASP",
+          "output_name": "ASP",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": 0.0,
+          "gap_to_next_best": 2.216,
+          "state_energies": {
+            "ASH_OD1A": 2.216,
+            "ASH_OD1B": 2.216,
+            "ASH_OD2A": 0.0,
+            "ASH_OD2B": 2.216
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 29,
+          "icode": "",
+          "input_name": "ASP",
+          "output_name": "ASP",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 30,
+          "icode": "",
+          "input_name": "ASP",
+          "output_name": "ASP",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 34,
+          "icode": "",
+          "input_name": "GLU",
+          "output_name": "GLU",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 35,
+          "icode": "",
+          "input_name": "GLU",
+          "output_name": "GLU",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 58,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -5.038,
+          "gap_to_next_best": 12.656,
+          "state_energies": {
+            "GLN": -5.038,
+            "GLNR": 7.618
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 60,
+          "icode": "",
+          "input_name": "ASP",
+          "output_name": "ASP",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 61,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "no_polar_neighbors",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 65,
+          "icode": "",
+          "input_name": "GLU",
+          "output_name": "GLU",
+          "flipped": false,
+          "changed": false,
+          "source": "default",
+          "energy": null,
+          "gap_to_next_best": null,
+          "state_energies": null
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 69,
+          "icode": "",
+          "input_name": "HIS",
+          "output_name": "HIE",
+          "flipped": true,
+          "changed": true,
+          "source": "assigned",
+          "energy": 0.0,
+          "gap_to_next_best": 0.0,
+          "state_energies": {
+            "HID": 1.168,
+            "HIDR": 0.0,
+            "HIE": 5.141,
+            "HIER": 0.0,
+            "HIP": 1.168,
+            "HIPR": 0.0
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 83,
+          "icode": "",
+          "input_name": "ASN",
+          "output_name": "ASN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -6.039,
+          "gap_to_next_best": 23.849,
+          "state_energies": {
+            "ASN": -6.039,
+            "ASNR": 17.811
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 88,
+          "icode": "",
+          "input_name": "ASN",
+          "output_name": "ASN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -4.255,
+          "gap_to_next_best": 18.147,
+          "state_energies": {
+            "ASN": -4.255,
+            "ASNR": 13.892
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 92,
+          "icode": "",
+          "input_name": "GLN",
+          "output_name": "GLN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -3.185,
+          "gap_to_next_best": 20.678,
+          "state_energies": {
+            "GLN": -3.185,
+            "GLNR": 17.493
+          }
+        },
+        {
+          "output_file": "1xl2_0.pdb",
+          "chain": "B",
+          "resnum": 98,
+          "icode": "",
+          "input_name": "ASN",
+          "output_name": "ASN",
+          "flipped": false,
+          "changed": false,
+          "source": "assigned",
+          "energy": -0.367,
+          "gap_to_next_best": 3.926,
+          "state_energies": {
+            "ASN": -0.367,
+            "ASNR": 3.56
+          }
+        }
+      ]
+    }
+  ]
+}

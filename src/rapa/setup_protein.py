@@ -29,9 +29,8 @@ import os
 import copy
 
 import numpy as np
-import rapa_residue_atom as rra
-import global_constants as gc
-
+from . import rapa_residue_atom as rra
+from . import global_constants as gc
 import Bio
 from Bio import PDB
 

@@ -14,7 +14,18 @@ Minimum of Python 3.9 is required.
 
 ## Installation
 1. Download or git clone using: https://github.com/Ventus-Therapeutics/rapa.git
-2. Run:  ``` pip install -r requirement.txt ``` or ``` conda install --yes --file requirement.txt ``` to install the dependencies.
+2. From the rapa folder, install RAPA and its dependencies (Biopython, NumPy):
+   ```bash
+   $pip install .            # or "pip install -e ." to edit the code in place
+   ```
+   This provides the `rapa` command and the `rapa` Python package.
+
+   Without installing: install the dependencies (``` pip install -r requirement.txt ``` or ``` conda install --yes --file requirement.txt ```) and run `python -m rapa ...` with the `src` folder on `PYTHONPATH`:
+   ```bash
+   $PYTHONPATH=<path to rapa folder>/src python -m rapa -pID input.pdb
+   ```
+
+**Upgrading from 1.1:** the command is now `rapa` (or `python -m rapa`) instead of `<path to rapa folder>/src/rapa.py`; the options are unchanged.
 
 
 ## Usage
@@ -32,8 +43,8 @@ Minimum of Python 3.9 is required.
 RAPA is executed with a PDB file as input. For instance, to run RAPA on the PDB file `1xl2_noH.pdb` ( **having no gaps, no steric clashes, no hydrogen atoms and has all residue names in AMBER format**) in the examples folder, the following steps can be executed:
 ``` bash
 $cd <path to rapa folder>/examples/
-$<path to rapa folder>/src/rapa.py -pID [input_pdb_name.pdb] -o [out_name]   
-$<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out  
+$rapa -pID [input_pdb_name.pdb] -o [out_name]   
+$rapa -pID 1xl2_noH.pdb -o 1xl2_out  
 ```
 ##### Notes
 1. The provided PDBs in the example folder have **no gaps, no steric clashes, no hydrogen atoms and has all residue names in AMBER format**, hence meeting the conditions to run RAPA on it.
@@ -46,9 +57,9 @@ $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out
 - **Example:**  
   ```bash 
   $cd <path to rapa folder>/examples/
-  $<path to rapa folder>/src/rapa.py -p 1bcd_noH
+  $rapa -p 1bcd_noH
   or
-  $<path to rapa folder>/src/rapa.py -p 1bcd_noH.pdb
+  $rapa -p 1bcd_noH.pdb
   ```
 
 ##### `-o` or `--out_name` (Optional)  
@@ -58,12 +69,12 @@ $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out
 - **Example:**  
   ```bash  
   $cd <path to rapa folder>/examples/
-  $<path to rapa folder>/src/rapa.py -pID 1bcd_noH.pdb -o test 
+  $rapa -pID 1bcd_noH.pdb -o test 
   ```  
   This will generate output files in the folder `test_outputs`: `test_0.pdb`, `test_1.pdb`, etc.  
   If omitted: 
   ```bash  
-  $<path to rapa folder>/src/rapa.py -pID 1bcd_noH.pdb'  
+  $rapa -pID 1bcd_noH.pdb'  
   ```
   This will generate output files in the folder `1bcd_noH_outputs`: `1bcd_noH_0.pdb`, `1bcd_noH_1.pdb`, etc
   
@@ -73,7 +84,7 @@ $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out
 - **Description:** Includes the named HETATM residues (ligands) as fixed hydrogen-bond partners when RAPA scores states. Ligand atoms are typed from their element and the hydrogens in the input PDB: O bonded to H is donor/acceptor, O without H is an acceptor, N bonded to H is a donor, N without H is an acceptor. Ligand hydrogens in the input are kept (in the output too). Ligand lone pairs are assumed to point straight at their partner (best-case geometry). **Provide the ligand with explicit hydrogens:** without them donors cannot be identified, so only the ligand's O atoms are used (as acceptors) and a warning is written to the `.info` file.
 - **Example:**
   ```bash
-  $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb --ligand 189
+  $rapa -pID 1xl2_noH.pdb --ligand 189
   ```
 
 ##### `--fix` (Optional)
@@ -81,7 +92,7 @@ $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out
 - **Description:** Pins residues to a state instead of letting RAPA assign them; RAPA then assigns everything else around them. States: `HID`, `HIE`, `HIP`, `ASN`, `GLN`, `ASP`, `GLU`, plus `HIDR`, `HIER`, `HIPR`, `ASNR`, `GLNR` for a side chain flipped 180° relative to the input. ASH/GLH cannot be pinned. When one ASP/GLU of an interacting pair is pinned, its partner is kept deprotonated too.
 - **Example:**
   ```bash
-  $<path to rapa folder>/src/rapa.py -pID 1bcd_noH.pdb --fix A:64:HIP,A:67:ASNR
+  $rapa -pID 1bcd_noH.pdb --fix A:64:HIP,A:67:ASNR
   ```
 
 ##### `--around` (Optional, requires `--ligand`)
@@ -89,7 +100,7 @@ $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out
 - **Description:** Only assigns HIS/ASN/GLN/ASP/GLU residues with any atom within this distance of the `--ligand` residues. All other residues keep their input state (HID/HIE/HIP/ASH/GLH names are kept; an unspecified HIS becomes HIE). Much faster on large systems. Note that kept ASH/GLH residues outside the region do not contribute hydrogen-bond energy to residues inside it.
 - **Example:**
   ```bash
-  $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb --ligand 189 --around 8
+  $rapa -pID 1xl2_noH.pdb --ligand 189 --around 8
   ```
 
 ##### `--max_outputs` (Optional)
@@ -108,16 +119,13 @@ $<path to rapa folder>/src/rapa.py -pID 1xl2_noH.pdb -o 1xl2_out
 ##### Listing Available Options  
 Use the `-h` flag to view all available command-line options:  
 ```bash  
-$<path to rapa folder>/src/rapa.py -h  
+$rapa -h  
 ```
 
 ### Using RAPA from Python
-Add the `src` folder to the Python path and call `rapa.run`. Its arguments mirror the command-line options; progress output is off unless `verbose=True`. Invalid input raises `RapaInputError` instead of exiting.
+After installing (or with `src` on the Python path), call `rapa.run`. Its arguments mirror the command-line options; progress output is off unless `verbose=True`. Invalid input raises `rapa.RapaInputError` instead of exiting.
 ```python
-import sys
-sys.path.insert(0, '<path to rapa folder>/src')
 import rapa
-from errors import RapaInputError
 
 result = rapa.run('examples/1xl2_noH.pdb', ligands=['189'], around=8,
                   fix=['A:25:ASP'], max_outputs=4, output_dir='1xl2_run', pymol=True)
@@ -189,14 +197,24 @@ Example PDB files are available in the `examples` folder.
 - `1bcd_noH.pdb`, `1xl2_noH.pdb`: proteins prepared for RAPA (reference outputs in `solutions_to_compare`).
 - `1stp_btnH.pdb`: streptavidin with biotin, hydrogens added to biotin. Biotin's ureido O accepts an H-bond from Asn23, so this shows `--ligand` at work:
   ```bash
-  $<path to rapa folder>/src/rapa.py -pID examples/1stp_btnH.pdb --ligand BTN --pymol
+  $rapa -pID examples/1stp_btnH.pdb --ligand BTN --pymol
   ```
   With the ligand, Asn23's crystal orientation scores about 4 kcal/mol lower and its flipped orientation about 7 kcal/mol higher than without it (see `state_energies` in the summary files).
 
 ### Tests
-`tests/test_ligand_1stp.py` checks ligand typing, the Asn23 energies above, `--around`, and the change report. It takes a few seconds:
 ```bash
-$python tests/test_ligand_1stp.py      # or: pytest tests/
+$pip install ".[test]"
+$pytest                     # about 15 seconds
+```
+- `tests/test_reference_outputs.py` runs the 1bcd and 1xl2 examples and checks that the output PDBs (atoms, residue names, coordinates within 0.01 Å) and every residue's state, flip, decision source and energies (within 0.02 kcal/mol) match `examples/solutions_to_compare/`.
+- `tests/test_ligand_1stp.py` checks ligand typing, the Asn23 energies above, `--around`, and the change report.
+
+Both also run without pytest, e.g. `python tests/test_reference_outputs.py`. GitHub Actions runs them on Python 3.9-3.13 for every push and pull request (`.github/workflows/tests.yml`).
+
+If a change to RAPA's results is intended, regenerate the reference outputs and review the differences before committing:
+```bash
+$python tests/regenerate_reference_outputs.py
+$git diff --stat examples/solutions_to_compare
 ```
 
 ---

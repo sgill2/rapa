@@ -1,4 +1,4 @@
-PDB ID: ../1bcd_noH 
+PDB ID: 1bcd_noH 
 Models: 1: [<Model id=0>]
 Chains: 1: [<Chain id=A>]
 
@@ -43,7 +43,29 @@ Unknown residues:
 Residues w/ degenerate states: (energy of different states within 1 kcal/mol)
  HIS-122 of chain A
 ####################################################################################################
-Done. Execution time is: 35.627604 seconds
+Changes relative to the input PDB (flipped = side chain rotated 180 degrees):
+In all 2 outputs:
+ A:3 HIS -> HIE (no_polar_neighbors)
+ A:4 HIS -> HID, flipped (assigned, E=-0.41, next best +0.41)
+ A:10 HIS -> HIE (no_polar_neighbors)
+ A:15 HIS -> HIE (assigned, E=-6.26, next best +6.26)
+ A:17 HIS -> HIE (assigned, E=0.00, next best +0.00)
+ A:36 HIS -> HIE (assigned, E=0.00, next best +0.00)
+ A:64 HIS -> HID (assigned, E=0.00, next best +0.00)
+ A:94 HIS -> HIM (metal)
+ A:96 HIS -> HIM (metal)
+ A:107 HIS -> HID (assigned, E=-2.05, next best +2.05)
+ A:119 HIS -> HIM (metal)
+ A:178 ASN flipped (assigned, E=-2.45, next best +1.16)
+ A:253 ASN flipped (assigned, E=-0.83, next best +3.84)
+Only in 1bcd_0.pdb:
+ A:122 HIS -> HID (degenerate_branch, E=-0.98, next best +0.48)
+Only in 1bcd_1.pdb:
+ A:122 HIS -> HID, flipped (degenerate_branch, E=-0.50, next best -0.48)
+13 residue(s) changed in every output; per-residue details for all outputs are in the _summary.csv/_summary.json files
+Summary files: 1bcd_outputs/1bcd_summary.csv, 1bcd_outputs/1bcd_summary.json
+####################################################################################################
+Done. Execution time is: 7.839370 seconds
 Number of files generated: 2 and files generated:
-/data5/cadd/software_development/zylin/rapa/examples/solutions_to_compare/1bcd_outputs/1bcd_0.pdb
-/data5/cadd/software_development/zylin/rapa/examples/solutions_to_compare/1bcd_outputs/1bcd_1.pdb
+./1bcd_outputs/1bcd_0.pdb
+./1bcd_outputs/1bcd_1.pdb

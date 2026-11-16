@@ -1,4 +1,4 @@
-PDB ID: ../1xl2_noH 
+PDB ID: 1xl2_noH 
 Models: 1: [<Model id=0>]
 Chains: 2: [<Chain id=A>, <Chain id=B>]
 
@@ -34,6 +34,13 @@ Unknown residues:
  GLN-92 of chain B
  ASN-98 of chain B
 ####################################################################################################
-Done. Execution time is: 11.544915 seconds
+Changes relative to the input PDB (flipped = side chain rotated 180 degrees):
+ A:25 ASP -> ASH (assigned, E=0.00, next best +2.22)
+ A:69 HIS -> HIE (assigned, E=0.00, next best +0.00)
+ B:69 HIS -> HIE, flipped (assigned, E=0.00, next best +0.00)
+3 residue(s) changed in every output; per-residue details for all outputs are in the _summary.csv/_summary.json files
+Summary files: 1xl2_outputs/1xl2_summary.csv, 1xl2_outputs/1xl2_summary.json
+####################################################################################################
+Done. Execution time is: 3.141267 seconds
 Number of files generated: 1 and files generated:
-/data5/cadd/software_development/zylin/rapa/examples/solutions_to_compare/1xl2_outputs/1xl2_0.pdb
+./1xl2_outputs/1xl2_0.pdb

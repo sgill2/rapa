@@ -29,13 +29,11 @@ from Bio import PDB
 from Bio.PDB import calc_angle, Vector, Atom
 
 
-import rapa_residue_atom as rra
-import setup_protein as stp
-import close_atoms as cats
-import rapa_math as mm
-import global_constants as gc
-
-
+from . import rapa_residue_atom as rra
+from . import setup_protein as stp
+from . import close_atoms as cats
+from . import rapa_math as mm
+from . import global_constants as gc
 def check_bond_angle_for_all_connected_atoms(sp3,abvSP3, sp3Coord, abvSP3Coord, aat0, aat1, aat2):
 
     """

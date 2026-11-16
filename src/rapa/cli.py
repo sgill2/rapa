@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 """
-Main file to run rapa
+Command-line interface and Python API (run) for RAPA
 
 Copyright (c) 2025 Ventus Therapeutics U.S., Inc.
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,15 +30,16 @@ from dataclasses import dataclass
 import timeit
 from datetime import datetime
 
-import setup_protein as stp
-import hydrogen_placement_sp2 as hsp2
-import state_assignment as sa
-import global_constants as gc
-import ligand as lig
-import residue_selection as rsel
-import summary
-from errors import RapaInputError
-from misc import prettify_time, Logger, generate_pymol_script, clean_pdb_atom_id, put_pdb_record_back
+from . import setup_protein as stp
+from . import hydrogen_placement_sp2 as hsp2
+from . import state_assignment as sa
+from . import global_constants as gc
+from . import ligand as lig
+from . import residue_selection as rsel
+from . import summary
+from .errors import RapaInputError
+from . import __version__
+from .misc import prettify_time, Logger, generate_pymol_script, clean_pdb_atom_id, put_pdb_record_back
 
 def get_unknown_list_for_pml(structure):
     all_unknown_residues = [] # this will be [('A', 253, 'HIE'), ('B', 101, 'SER')...]]
@@ -115,7 +115,7 @@ def parse_arguments(argv):
     """
     process arguments and parse them to global when needed
     """
-    parser = argparse.ArgumentParser(description='RAPA')
+    parser = argparse.ArgumentParser(prog='rapa', description='RAPA: Rotamer And Protonation Assignment')
     parser.add_argument('-pID', '--protein_id',dest='protID', type=str, required=True, metavar='',
                         help='Input protein ID name. It is a required argument of data type string.')
 
@@ -171,7 +171,7 @@ def parse_arguments(argv):
                              'fixed, metal), labels them with state and energy gap, and stores a scene per residue',
                         action='store_true')
 
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.1.1 ')
+    parser.add_argument('-v', '--version', action='version', version=f'%(prog)s {__version__}')
 
     parser.add_argument('--output_dir', dest='output_dir', type=str, default=None, metavar='',
                         help='Folder for the outputs. Default: [out_name]_outputs in the current directory')
@@ -562,5 +562,6 @@ def main(argv):
         sys.exit(1)
 
 
-if __name__ == "__main__":
+def console_main():
+    """Entry point for the `rapa` command."""
     main(sys.argv[1:])

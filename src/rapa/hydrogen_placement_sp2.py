@@ -29,12 +29,10 @@ import numpy as np
 import Bio
 from Bio import PDB
 from Bio.PDB import calc_angle, Vector, Atom
-import rapa_residue_atom as rra
-import setup_protein as stp
-import close_atoms as cats
-import global_constants as gc
-
-
+from . import rapa_residue_atom as rra
+from . import setup_protein as stp
+from . import close_atoms as cats
+from . import global_constants as gc
 def eliminate_extraneous_solution(HCoord, vecHeavy, theta):
 
     """

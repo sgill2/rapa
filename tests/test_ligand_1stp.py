@@ -18,11 +18,11 @@ import tempfile
 import unittest
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(REPO, 'src'))
+sys.path.insert(0, os.path.join(REPO, 'src'))  # so the tests also run without installing
 
 import rapa  # noqa: E402
-import ligand as lig  # noqa: E402
-from errors import RapaInputError  # noqa: E402
+from rapa import ligand as lig  # noqa: E402
+from rapa.errors import RapaInputError  # noqa: E402
 from Bio.PDB import PDBParser  # noqa: E402
 
 PDB = os.path.join(REPO, 'examples', '1stp_btnH.pdb')

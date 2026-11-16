@@ -35,15 +35,13 @@ from collections import Counter
 import Bio
 from Bio import PDB
 
-import setup_protein as stp
-import rapa_residue_atom as rra
-import hydrogen_placement_sp2 as hsp2
-import hydrogen_placement_sp3 as hsp3
-import close_atoms as cats
-import global_constants as gc
-import summary
-
-
+from . import setup_protein as stp
+from . import rapa_residue_atom as rra
+from . import hydrogen_placement_sp2 as hsp2
+from . import hydrogen_placement_sp3 as hsp3
+from . import close_atoms as cats
+from . import global_constants as gc
+from . import summary
 def setup_HIS(HISres, structure, HIStype = None):
 
     """
